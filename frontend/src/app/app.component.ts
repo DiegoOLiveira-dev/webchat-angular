@@ -88,10 +88,14 @@ export class AppComponent implements OnInit {
   }
 
   join(userName: string, roomId: string): void {
-    this.chatService.jonRoom({user: userName, roomId })
+    this.chatService.joinRoom({user: userName, roomId })
   }
 
-  sendMessage(): void {
+  sendMessage(e: any): void {
+
+    if(e){
+
+    }
     this.chatService.sendMessage({
       data: this.currentUser.name,
       room: this.roomId,

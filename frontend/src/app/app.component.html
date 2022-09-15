@@ -3,7 +3,7 @@
     <div class="col-md-4">
       <div class="user-list-card">
         <div class="user-card" 
-            [ngClass]="user?.phone === selectedUser?.phone && 'active'"
+            [ngClass]="{'active': user?.phone === selectedUser?.phone}"
             *ngFor="let user of userList"
             (click)="selectedUser(user?.phone)"
           >
@@ -21,10 +21,10 @@
           </div>
           <div class="chat-body">
             <div *ngFor="let item of messageArray"
-                  [ngClass]="item?.user === currentUser?.name && 'same-user'"
+                  [ngClass]="{'same-user': item?.user === currentUser?.name}"
             ></div>
             <p class="message-container">
-              {{item?.message}}
+              item?.message
             </p>
           </div>
           <div class="chat-footer">
@@ -35,13 +35,13 @@
                           placeholder="type a message"
                           class="form-control"
                           [(ngModel)]="messageText"
-                          (keyUp)="$event.keyCode === 13 && sendMessage()"
+                          (keyUp)="sendMessage($event)"
                     />
                 </div>
               </div>
               <div class="col-md-2 text-center align-self-center">
                 <button class="btn btn-primary btn-sm px-3"
-                        (click)="sendMessage()">send
+                        (click)="sendMessage($event)">send
                 </button>
               </div>
             </div>

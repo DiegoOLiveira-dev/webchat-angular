@@ -14,7 +14,7 @@ export class ChatService {
     this.socket = io(this.url)
   }
 
-  jonRoom(data: any): void {
+  joinRoom(data: any): void {
     this.socket.emit('join', data);
   }
 
@@ -31,9 +31,16 @@ export class ChatService {
       return () => {
         this.socket.disconnect()
       }
-    })
+    })    
+  }
 
-    
+  getStorage() {
+    const storage = localStorage.getItem('chats')
+    return storage ? JSON.parse(storage) : []
+  }
+
+  setStorage(data: any) {
+    localStorage.setItem('chats', data)
   }
 
 
