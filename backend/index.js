@@ -1,20 +1,16 @@
 let express = require('express');
-let http = require('http');
-let socketIO = require('socket.io');
-
 
 let app = express()
+
+let http = require('http');
 let server = http.Server(app)
 
+let socketIO = require('socket.io');
 let io = socketIO(server);
 
 const port = process.env.PORT || 3000;
 
-server.listen(port, () => {
-    console.log(`started on: ${port}`)
-})
-
-io.on('conection', (socket) => {
+io.on('connection', (socket) => {
     socket.on('join', (data) => {
         socket.join(data.room);
         socket.broadcast.to(data.room).emit('user joined')
@@ -25,3 +21,6 @@ io.on('conection', (socket) => {
     })
 })
 
+server.listen(port, () => {
+    console.log(`started on: ${port}`)
+})

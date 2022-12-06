@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
 import { ChatService } from './services/chat/chat.service';
 
 @Component({
@@ -6,12 +8,16 @@ import { ChatService } from './services/chat/chat.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
+
+  @ViewChild('popup', {static: false}) popup: any;
 
   public roomId!: string;
   public messageText!: string;
-  public messageArray: {user: string, message: string}[] = [];
+  public messageArray: { user: string, message: string }[] = [];
+  private storageArray: any;
 
+  public showScreen = false;
   public phone!: string;
   public currentUser: any;
   public selectedUser: any;
@@ -20,7 +26,7 @@ export class AppComponent implements OnInit {
     {
       id: 1,
       name: 'Diego',
-      phone: '123456789',
+      phone: '11952391485',
       image: 'assets/user/user-1.png',
       roomId: {
         2: 'room-1',
@@ -31,7 +37,7 @@ export class AppComponent implements OnInit {
     {
       id: 2,
       name: 'Diana',
-      phone: '123445678',
+      phone: '11949227047',
       image: 'assets/user/user-2.png',
       roomId: {
         1: 'room-1',
@@ -41,8 +47,8 @@ export class AppComponent implements OnInit {
     },
     {
       id: 3,
-      name: 'Lucas',
-      phone: '123455678',
+      name: 'Albert Flores',
+      phone: '9988776655',
       image: 'assets/user/user-3.png',
       roomId: {
         1: 'room-2',
@@ -52,56 +58,106 @@ export class AppComponent implements OnInit {
     },
     {
       id: 4,
-      name: 'Alef',
-      phone: '123456678',
+      name: 'Dianne Russell',
+      phone: '9876556789',
       image: 'assets/user/user-4.png',
       roomId: {
         1: 'room-3',
         2: 'room-5',
         3: 'room-6'
       }
-    },
-  ]
+    }
+  ];
 
   constructor(
+    private modalService: NgbModal,
     private chatService: ChatService
   ) {
-
-    this.chatService.getMessage()
-      .subscribe((data: {user: string, message: string}) => {
-        this.messageArray.push(data);
-      })
-
   }
+
   ngOnInit(): void {
-
-    this.currentUser = this.userList[0]
-
+    this.chatService.getMessage()
+      .subscribe((data: { user: string, room: string, message: string }) => {
+        // this.messageArray.push(data);
+        if (this.roomId) {
+          setTimeout(() => {
+            this.storageArray = this.chatService.getStorage();
+            const storeIndex = this.storageArray
+              .findIndex((storage: any) => storage.roomId === this.roomId);
+            this.messageArray = this.storageArray[storeIndex].chats;
+          }, 500);
+        }
+      });
   }
 
-  selectUserHandler(phone: string):void {
-    this.selectedUser = this.userList.find(user => user.phone === phone)
-    this.roomId = this.selectedUser.roomId[this.selectedUser.id]
-    this.messageArray = []
-
-    this.join(this.currentUser.name, this.roomId)
+  ngAfterViewInit(): void {
+    this.openPopup(this.popup);
   }
 
-  join(userName: string, roomId: string): void {
-    this.chatService.joinRoom({user: userName, roomId })
+  openPopup(content: any): void {
+    this.modalService.open(content, {backdrop: 'static', centered: true});
   }
 
-  sendMessage(e: any): void {
+  login(dismiss: any): void {
+    this.currentUser = this.userList.find(user => user.phone === this.phone.toString());
+    this.userList = this.userList.filter((user) => user.phone !== this.phone.toString());
 
-    if(e){
-
+    if (this.currentUser) {
+      this.showScreen = true;
+      dismiss();
     }
+  }
+
+  selectUserHandler(phone: string): void {
+    this.selectedUser = this.userList.find(user => user.phone === phone);
+    this.roomId = this.selectedUser.roomId[this.currentUser.id];
+    this.messageArray = [];
+
+    this.storageArray = this.chatService.getStorage();
+    const storeIndex = this.storageArray
+      .findIndex((storage: any) => storage.roomId === this.roomId);
+
+    if (storeIndex > -1) {
+      this.messageArray = this.storageArray[storeIndex].chats;
+    }
+
+    this.join(this.currentUser.name, this.roomId);
+  }
+
+  join(username: string, roomId: string): void {
+    this.chatService.joinRoom({user: username, room: roomId});
+  }
+
+  sendMessage(): void {
     this.chatService.sendMessage({
-      data: this.currentUser.name,
+      user: this.currentUser.name,
       room: this.roomId,
       message: this.messageText
-    })
+    });
 
-    this.messageText = ''
+    this.storageArray = this.chatService.getStorage();
+    const storeIndex = this.storageArray
+      .findIndex((storage: any) => storage.roomId === this.roomId);
+
+    if (storeIndex > -1) {
+      this.storageArray[storeIndex].chats.push({
+        user: this.currentUser.name,
+        message: this.messageText
+      });
+    } else {
+      const updateStorage = {
+        roomId: this.roomId,
+        chats: [{
+          user: this.currentUser.name,
+          message: this.messageText
+        }]
+      };
+
+      this.storageArray.push(updateStorage);
+    }
+
+    this.chatService.setStorage(this.storageArray);
+    this.messageText = '';
   }
+
 }
